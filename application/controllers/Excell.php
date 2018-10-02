@@ -9,16 +9,12 @@ class Excell extends CI_Controller {
         parent::__construct();
         //load the excel library
         $this->load->library('excel');
+        $this->load->model('kelas_model');
     }
 
     public function index()
     {
-
         $file = 'public/contoh_data_lengkap.xls';
-
-        //load the excel library
-        $this->load->library('excel');
-
         //read file from path
         $objPHPExcel = PHPExcel_IOFactory::load($file);
 
@@ -37,7 +33,7 @@ class Excell extends CI_Controller {
             {
                 $header[$row][$column] = $data_value;
             }
-            
+
             if (!empty($data_value) && $row != 1)
             {
                 $arr_data[$row][$column] = $data_value;
@@ -48,7 +44,48 @@ class Excell extends CI_Controller {
         $data['header'] = $header;
         $data['values'] = $arr_data;
 
-        print_r($data);
+        $out = array();
+        $unknown_data = array();
+        $double['data_duplicate']['B'] = array();
+
+        foreach ($data['values'] as $key => $value)
+        {
+            foreach ($data['values'] as $key2 => $value2)
+            {
+                if (!array_key_exists('B', $value) && !array_key_exists('D', $value) && !array_key_exists('F', $value))
+                {
+                    $unknown_data['unknown_data'][$key2] = $value;
+                }
+
+                if ($key != $key2)
+                {
+                    if (($value['B'] == $value2['B']))
+                    {
+                        $double['data_duplicate']['B'][] = $key2;
+                    }
+
+                    if (($value['D'] == $value2['D']))
+                    {
+                        $double['data_duplicate']['D'][] = $key2;
+                    }
+
+                    if (($value['F'] == $value2['F']))
+                    {
+                        $double['data_duplicate']['F'][] = $key2;
+                    }
+                }
+            }
+        }
+        
+        $data_double = array_keys(
+                array_count_values(
+                        array_merge($double['data_duplicate']['B'], $double['data_duplicate']['D'], $double['data_duplicate']['F'])
+                        )
+                );
+        
+        print_r($data_double);
+        // save data
+        //$this->_save($data['values']);
     }
 
     public function writer()
@@ -79,6 +116,11 @@ class Excell extends CI_Controller {
         $objWriter = PHPExcel_IOFactory::createWriter($this->excel, 'Excel5');
         //force user to download the Excel file without writing it to server's HD
         $objWriter->save('php://output');
+    }
+
+    public function _save($data = '')
+    {
+        $this->kelas_model->save($data);
     }
 
 }
