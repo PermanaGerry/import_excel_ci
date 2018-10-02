@@ -87,7 +87,7 @@ class Excell extends CI_Controller {
         }
         
         // input data to database
-        $this->kelas_model->save($data);
+        $this->kelas_model->save($save);
     }
 
     public function _duplicate_data($data = '')
